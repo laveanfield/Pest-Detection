@@ -1,0 +1,10 @@
+path: '/content/data'
+train: images/train
+val: images/val
+test: images/test
+
+# Classes
+names:
+  0: bo thon
+  1: bo map
+  2: bo to
