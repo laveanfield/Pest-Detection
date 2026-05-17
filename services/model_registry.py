@@ -12,7 +12,7 @@ class ModelRegistry:
     @classmethod
     def get_active_model(cls, db: Session) -> YOLO:
         active = db.query(ModelVersion).filter(
-            ModelRegistry.is_active == True
+            ModelVersion.is_active == True
         ).first()
 
         if active is None:

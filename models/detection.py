@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.sql import func
 from db.database import Base
 
@@ -15,4 +15,5 @@ class Detection(Base):
     thin_pest_count = Column(Integer, default=0)
     round_pest_count = Column(Integer, default=0)
     big_pest_count = Column(Integer, default=0)
+    confidence_threshold = Column(Float, default=0.25)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
