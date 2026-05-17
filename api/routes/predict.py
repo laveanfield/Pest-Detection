@@ -54,7 +54,7 @@ async def get_predict_result(
     record = db.query(Detection).filter(Detection.id == detection_id).first()
     
     if not record:
-        raise HTTPException(status_code=404, detail="Request not found.")
+        raise HTTPException(status_code=404, detail="Request not found")
 
     response = {
         "id": record.id,

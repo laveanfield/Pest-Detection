@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.sql import func
 from db.database import Base
-from datetime import datetime, UTC
 
 class Detection(Base):
     __tablename__ = "detections"
@@ -15,4 +15,4 @@ class Detection(Base):
     thin_pest_count = Column(Integer, default=0)
     round_pest_count = Column(Integer, default=0)
     big_pest_count = Column(Integer, default=0)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

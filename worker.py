@@ -3,7 +3,8 @@ from celery import Celery
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from models.detection import Detection
-from services.model_service import predict_image, model
+from services.model_service import predict_image
+from services.model_registry import ModelRegistry
 from services.cloudinary_service import upload_image
 from services.eigen_cam_service import generate_eigencam
 from utils.logger import get_logger
@@ -28,6 +29,7 @@ def predict_task(db_record_id: int, image_path: str, confidence_threshold: float
     cam_output_path = None
 
     try:
+        model = ModelRegistry.get_active_model(db)
         prediction = predict_image(image_path, conf=confidence_threshold)
 
         output_img_path = prediction["output_img_path"]

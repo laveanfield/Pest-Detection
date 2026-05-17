@@ -6,17 +6,15 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-logger.info("Loading model...")
-model = YOLO("models/best.pt") 
-logger.info("Model loaded successfully.")
-
 PEST_MAPPING = {
     "bo thon": "thin_pest",
     "bo map" : "round_pest",
     "bo to"  : "big_pest"
 }
 
-def predict_image(file_path: str, conf: float = 0.25) -> dict:
+def predict_image(file_path: str, conf: float = 0.25, model=None) -> dict:
+    if model is None:
+        model = YOLO("models/version/best.pt")
     results = model.predict(source=file_path, conf=conf)
     result = results[0]
     
