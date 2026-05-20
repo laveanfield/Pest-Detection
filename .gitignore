@@ -25,3 +25,10 @@ pest_detection_training/models/runs/run1/
 .DS_Store
 Thumbs.db
 
+#react + vite
+node_modules
+*.log
+dist
+.vit
+stats.html
+.eslintcache
