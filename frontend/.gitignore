@@ -2,3 +2,11 @@ node_modules
 dist
 .env.local
 .env.*.local
+
+#react + vite
+node_modules
+*.log
+dist
+.vit
+stats.html
+.eslintcache
