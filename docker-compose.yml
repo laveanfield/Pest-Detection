@@ -1,11 +1,11 @@
 services:
   backend:
-    build: .
+    build: ./backend
     container_name: pest_backend
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
-      - .:/app
+      - ./backend:/app
     depends_on:
       db:
         condition: service_healthy
@@ -18,11 +18,11 @@ services:
       - YOLO_CONFIG_DIR=/tmp/Ultralytics
 
   worker:
-    build: .
+    build: ./backend
     container_name: pest_worker
     command: celery -A worker.celery_app worker --loglevel=info --concurrency=1 
     volumes:
-      - .:/app
+      - ./backend:/app
     env_file:
       - .env
     depends_on:

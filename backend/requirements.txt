@@ -18,7 +18,11 @@ opencv-python
 matplotlib
 httpx
 prometheus-fastapi-instrumentator
+<<<<<<< HEAD:requirements.txt
 
 passlib[bcrypt]
 python-jose[cryptography]
 apscheduler
+=======
+prometheus-client
+>>>>>>> 76aae02d2e36c5899490efc011df2ec5fd014721:backend/requirements.txt

@@ -1,27 +1,46 @@
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 .Python
 
-venv/
-venv1/
+# Virtual env
+**/venv*/
+**/.venv*/
 
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Database
 postgres_data/
+
+# YOLO cache
 /tmp/Ultralytics/
 
+# Training
 pest_detection_training/notebooks/yolo26n.pt
 pest_detection_training/notebooks/yolo8s.pt
 pest_detection_training/data/dataset/
 pest_detection_training/data/dataset.zip
 pest_detection_training/models/runs/run1/
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.log
+frontend/.vite/
+frontend/stats.html
+frontend/.eslintcache
+
+# Editor
 .vscode/
 .idea/
 *.swp
 *.swo
 
+# OS
 .DS_Store
 Thumbs.db
-
