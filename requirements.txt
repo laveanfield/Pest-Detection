@@ -18,3 +18,7 @@ opencv-python
 matplotlib
 httpx
 prometheus-fastapi-instrumentator
+
+passlib[bcrypt]
+python-jose[cryptography]
+apscheduler

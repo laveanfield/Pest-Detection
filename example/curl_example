@@ -1,5 +1,5 @@
 curl.exe -X POST "http://localhost:8000/predict/batch" `
   -F "user_id=aaa" `
   -F "confidence_threshold=0.25" `
-  -F "files=@\D:\IT\Computer Vision\Object Detection\pest_detection\uploads\img1.jpg" `
-  -F "files=@\D:\IT\Computer Vision\Object Detection\pest_detection\uploads\img2.jpg"
+  -F "files=@D:\IT\Computer Vision\Object Detection\pest_detection\uploads\img1.jpg" `
+  -F "files=@D:\IT\Computer Vision\Object Detection\pest_detection\uploads\img2.jpg"
