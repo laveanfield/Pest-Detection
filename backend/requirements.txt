@@ -19,3 +19,8 @@ matplotlib
 httpx
 prometheus-fastapi-instrumentator
 prometheus-client
+
+bcrypt==4.0.1
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv

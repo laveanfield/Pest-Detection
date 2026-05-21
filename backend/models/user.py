@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from sqlalchemy.orm import relationship
 import uuid
 
 from sqlalchemy import (
@@ -76,4 +77,9 @@ class User(Base):
     is_verified = Column(
         Boolean,
         default=False
+    )
+
+    detections = relationship(
+        "Detection",
+        back_populates="user"
     )

@@ -1,9 +1,12 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
-from database import get_db
+from api.deps import get_db
 from datetime import datetime, timedelta
 from services.email_service import send_email
+
+security = HTTPBearer()
 
 from services.jwt_handler import (
     create_access_token,
@@ -16,10 +19,6 @@ from services.user_service import (
     get_user_by_email,
     hash_password,
     verify_password
-)
-
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="auth/login"
 )
 
 
@@ -75,10 +74,11 @@ def login(
 
 # GET CURRENT USER
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
 
+    token = credentials.credentials
     payload = verify_token(token)
 
     if payload is None:
