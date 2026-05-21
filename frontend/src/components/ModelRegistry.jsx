@@ -2,7 +2,14 @@ import React from "react";
 import { Brain, Check, RotateCw } from "lucide-react";
 import EmptyState from "./EmptyState";
 
-export default function ModelRegistry({ models, modelForm, setModelForm, handleRegisterModel, handleActivateModel }) {
+export default function ModelRegistry({
+  models,
+  modelForm,
+  setModelForm,
+  handleRegisterModel,
+  handleActivateModel,
+  showRegistration = false,
+}) {
   return (
     <section className="panel model-panel">
       <div className="panel-heading">
@@ -35,53 +42,61 @@ export default function ModelRegistry({ models, modelForm, setModelForm, handleR
             )}
           </article>
         ))}
-        {!models.length && <EmptyState icon={Brain} title="No models registered" text="Add a version below when a model file is ready." />}
+        {!models.length && (
+          <EmptyState
+            icon={Brain}
+            title="No models registered"
+            text={showRegistration ? "Add a version below when a model file is ready." : "Register a model before running predictions."}
+          />
+        )}
       </div>
 
-      <form className="model-form" onSubmit={handleRegisterModel}>
-        <input
-          required
-          value={modelForm.name}
-          onChange={(event) => setModelForm({ ...modelForm, name: event.target.value })}
-          placeholder="Version name"
-        />
-        <input
-          required
-          value={modelForm.file_path}
-          onChange={(event) => setModelForm({ ...modelForm, file_path: event.target.value })}
-          placeholder="Model file path"
-        />
-        <div className="compact-inputs">
+      {showRegistration && (
+        <form className="model-form" onSubmit={handleRegisterModel}>
           <input
-            type="number"
-            min="0"
-            max="1"
-            step="0.001"
-            value={modelForm.mAP50}
-            onChange={(event) => setModelForm({ ...modelForm, mAP50: event.target.value })}
-            placeholder="mAP50"
+            required
+            value={modelForm.name}
+            onChange={(event) => setModelForm({ ...modelForm, name: event.target.value })}
+            placeholder="Version name"
           />
           <input
-            type="number"
-            min="0"
-            max="1"
-            step="0.001"
-            value={modelForm.mAP50_95}
-            onChange={(event) => setModelForm({ ...modelForm, mAP50_95: event.target.value })}
-            placeholder="mAP50-95"
+            required
+            value={modelForm.file_path}
+            onChange={(event) => setModelForm({ ...modelForm, file_path: event.target.value })}
+            placeholder="Model file path"
           />
-        </div>
-        <textarea
-          value={modelForm.description}
-          onChange={(event) => setModelForm({ ...modelForm, description: event.target.value })}
-          placeholder="Description"
-          rows="2"
-        />
-        <button type="submit" className="secondary-button">
-          <Brain size={17} />
-          Register Model
-        </button>
-      </form>
+          <div className="compact-inputs">
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.001"
+              value={modelForm.mAP50}
+              onChange={(event) => setModelForm({ ...modelForm, mAP50: event.target.value })}
+              placeholder="mAP50"
+            />
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.001"
+              value={modelForm.mAP50_95}
+              onChange={(event) => setModelForm({ ...modelForm, mAP50_95: event.target.value })}
+              placeholder="mAP50-95"
+            />
+          </div>
+          <textarea
+            value={modelForm.description}
+            onChange={(event) => setModelForm({ ...modelForm, description: event.target.value })}
+            placeholder="Description"
+            rows="2"
+          />
+          <button type="submit" className="secondary-button">
+            <Brain size={17} />
+            Register Model
+          </button>
+        </form>
+      )}
     </section>
   );
 }

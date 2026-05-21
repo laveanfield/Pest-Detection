@@ -2,7 +2,7 @@ import React from "react";
 import { History } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
-export const formatDate = (value) => {
+const formatDate = (value) => {
   if (!value) return "Unknown";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown";
@@ -14,7 +14,7 @@ export const formatDate = (value) => {
   }).format(date);
 };
 
-export default function HistoryTable({ history, formatDate }) {
+export default function HistoryTable({ history }) {
   return (
     <section className="panel">
       <div className="panel-heading">
