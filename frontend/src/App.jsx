@@ -131,20 +131,38 @@ export function MainApp({ onLogout }) {
     setIsRefreshing(true);
     setError("");
     try {
-      const [nextStats, nextHistory, nextModels] = await Promise.all([
-        apiRequest("/stats/"),
-        apiRequest("/history/?limit=12"),
-        apiRequest("/models/"),
-      ]);
-      setStats(nextStats);
-      setHistory(nextHistory);
-      setModels(nextModels);
+      const promises = [apiRequest("/stats/"), apiRequest("/history/?limit=12")];
+
+      // only fetch models when the user is on the registration page
+      const shouldFetchModels = activePage === "register";
+      if (shouldFetchModels) promises.push(apiRequest("/models/"));
+
+      const results = await Promise.allSettled(promises);
+
+      // stats
+      if (results[0].status === "fulfilled") setStats(results[0].value);
+      else setStats(null);
+
+      // history
+      if (results[1].status === "fulfilled") setHistory(results[1].value);
+      else setHistory([]);
+
+      // models (only present when requested)
+      if (shouldFetchModels) {
+        const modelsResult = results[2];
+        if (modelsResult?.status === "fulfilled") setModels(modelsResult.value);
+        else setModels([]);
+      }
+
+      // surface first error but don't block successful results
+      const firstRejected = results.find((r) => r.status === "rejected");
+      if (firstRejected) setError(firstRejected.reason?.message || String(firstRejected.reason));
     } catch (err) {
       setError(err.message);
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [activePage]);
 
   React.useEffect(() => {
     refreshDashboard();
@@ -185,11 +203,20 @@ export function MainApp({ onLogout }) {
     let cancelled = false;
     const pollBatch = async () => {
       try {
-        const [status, nextHistory] = await Promise.all([
+        const results = await Promise.allSettled([
           apiRequest(`/predict/batch/${batchJob.batch_id}`),
           apiRequest("/history/?limit=100"),
         ]);
         if (cancelled) return;
+
+        if (results[0].status === "rejected") {
+          // can't proceed without status; cancel this batch polling cycle
+          if (!cancelled) setError(results[0].reason?.message || String(results[0].reason));
+          return;
+        }
+
+        const status = results[0].value;
+        const nextHistory = results[1].status === "fulfilled" ? results[1].value : [];
 
         setBatchStatus(status);
         setBatchDetections(nextHistory.filter((item) => item.batch_id === batchJob.batch_id));
@@ -398,7 +425,7 @@ export function MainApp({ onLogout }) {
         )}
         {activePage === "prediction" && (
           <>
-            <DashboardStats stats={stats} />
+            {/* <DashboardStats stats={stats} /> */}
 
             <section className="workspace-grid">
               <UploadPanel
