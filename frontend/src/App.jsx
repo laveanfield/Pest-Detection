@@ -25,6 +25,7 @@ export default function App() {
   const [batchJob, setBatchJob] = React.useState(null);
   const [batchStatus, setBatchStatus] = React.useState(null);
   const [batchSummary, setBatchSummary] = React.useState(null);
+  const [batchDetections, setBatchDetections] = React.useState([]);
   const [isBatchSubmitting, setIsBatchSubmitting] = React.useState(false);
   const [currentJob, setCurrentJob] = React.useState(null);
   const [prediction, setPrediction] = React.useState(null);
@@ -111,10 +112,14 @@ export default function App() {
     let cancelled = false;
     const pollBatch = async () => {
       try {
-        const status = await apiRequest(`/predict/batch/${batchJob.batch_id}`);
+        const [status, nextHistory] = await Promise.all([
+          apiRequest(`/predict/batch/${batchJob.batch_id}`),
+          apiRequest(`/history/?user_id=${encodeURIComponent(userId || DEFAULT_USER_ID)}&limit=100`),
+        ]);
         if (cancelled) return;
 
         setBatchStatus(status);
+        setBatchDetections(nextHistory.filter((item) => item.batch_id === batchJob.batch_id));
         const isComplete = status.finished + status.failed >= status.total;
 
         if (isComplete) {
@@ -144,7 +149,7 @@ export default function App() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [batchJob, refreshDashboard]);
+  }, [batchJob, refreshDashboard, userId]);
 
   const handleFileChange = (event) => {
     const nextFile = event.target.files?.[0];
@@ -187,6 +192,7 @@ export default function App() {
     setError("");
     setBatchSummary(null);
     setBatchStatus(null);
+    setBatchDetections([]);
     setBatchFiles(Array.from(event.target.files || []).slice(0, 10));
   };
 
@@ -201,6 +207,7 @@ export default function App() {
     setError("");
     setBatchStatus(null);
     setBatchSummary(null);
+    setBatchDetections([]);
     try {
       const formData = new FormData();
       formData.append("user_id", userId || DEFAULT_USER_ID);
@@ -260,6 +267,36 @@ export default function App() {
     }
   };
 
+  const downloadImage = async (url, filename) => {
+    if (!url) return;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const downloadBatchImages = () => {
+    batchDetections
+      .filter((item) => item.image_url)
+      .forEach((item, index) => {
+        window.setTimeout(() => {
+          downloadImage(item.image_url, `batch-${item.batch_id || "prediction"}-${item.id}.jpg`);
+        }, index * 250);
+      });
+  };
+
   const result = prediction?.result;
   const displayedImage = activeTab === "cam" ? result?.cam_url : result?.image_url;
   const isWorking = isSubmitting || Boolean(currentJob);
@@ -317,6 +354,7 @@ export default function App() {
                 setActiveTab={setActiveTab}
                 displayedImage={displayedImage}
                 isWorking={isWorking}
+                downloadImage={downloadImage}
               />
             </section>
 
@@ -333,7 +371,10 @@ export default function App() {
                 batchJob={batchJob}
                 batchStatus={batchStatus}
                 batchSummary={batchSummary}
+                batchDetections={batchDetections}
                 isBatchSubmitting={isBatchSubmitting}
+                downloadImage={downloadImage}
+                downloadBatchImages={downloadBatchImages}
               />
               <HistoryTable history={history} />
             </section>
