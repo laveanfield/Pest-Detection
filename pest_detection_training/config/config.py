@@ -22,10 +22,10 @@ for _d in [DATA_DIR, CONFIG_DIR, MODEL_DIR]:
 #===========================================
 
 TRAIN_CONFIG = dict(
-    model         = "yolov8s.pt",
+    model         = "yolov8m.pt",
     epochs        = 100,
     imgsz         = 640,
-    batch         = 16,
+    batch         = 4,
     workers       = 4,
     patience      = 30,
     optimizer     = "AdamW",
@@ -52,4 +52,4 @@ N_AUGMENT = 3
 # Class name
 #===========================================
 
-CLASS_NAMES = ["bo thon", "bo map", "bo to"]
+CLASS_NAMES = ["bo to", "bo map", "bo thon"]

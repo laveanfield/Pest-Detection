@@ -1,4 +1,10 @@
 import os
+import time
+from utils.metrics import(
+    CELERY_TASK_SUCCESS,
+    CELERY_TASK_FAILED,
+    CELERY_TASK_DURATION
+)
 from celery import Celery
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
@@ -28,17 +34,22 @@ def predict_task(
     logger.info(f"Task started - record_id={db_record_id}")
 
     db: Session = SessionLocal()
-    output_img_path = None
-    cam_output_path = None
+    start = time.time()
 
     try:
         model = ModelRegistry.get_active_model(db)
         process_detection(
             db, model, db_record_id, image_path, confidence_threshold
         )
+        CELERY_TASK_SUCCESS.labels(task_name="predict_task").inc()
+        CELERY_TASK_DURATION.labels(task_name="predict_task").observe(time.time() - start)
+
     except Exception as e:
         logger.exception(f"Task failed, record_id={db_record_id}")
+        CELERY_TASK_FAILED.labels(task_name="predict_task").inc()
+
         db.rollback()
+
         record = db.query(Detection).filter(Detection.id == db_record_id).first()
         if record:
             record.status = "FAILED"
@@ -57,11 +68,17 @@ def batch_callback_task(
     webhook_url: str = None
 ):
     db = SessionLocal()
+    start = time.time()
+
     try:
         summary = summarize_batch(db, batch_id, webhook_url)
         send_webhook(summary)
+
+        CELERY_TASK_SUCCESS.labels(task_name="batch_callback_task").inc()
+        CELERY_TASK_DURATION.labels(task_name="batch_callback_task").observe(time.time() - start)
     except Exception:
         logger.exception(f"Failed to process batch summary!!!")
+        CELERY_TASK_FAILED.labels(task_name="batch_callback_task").inc()
         db.rollback()
     finally:
         db.close()

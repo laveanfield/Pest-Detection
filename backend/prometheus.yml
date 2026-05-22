@@ -1,0 +1,5 @@
+scrape_configs:
+  - job_name: "pest_backend"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["pest_backend:8000"] 

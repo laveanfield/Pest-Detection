@@ -23,9 +23,11 @@ postgres_data/
 # Training
 pest_detection_training/notebooks/yolo26n.pt
 pest_detection_training/notebooks/yolo8s.pt
+pest_detection_training/notebooks/yolo8m.pt
 pest_detection_training/data/dataset/
 pest_detection_training/data/dataset.zip
 pest_detection_training/models/runs/run1/
+pest_detection_training/models/runs/run2/
 
 # Frontend
 frontend/node_modules/
