@@ -4,14 +4,20 @@ from api.deps import get_db
 from models.model_version import ModelVersion
 from services.model_registry import ModelRegistry
 from schemas.model_version import ModelVersionCreate, ModelVersionResponse
+from models.user import User, RoleEnum
+from services.authentication_service import get_current_user
 
 router = APIRouter(prefix="/models", tags=["Model"])
 
 @router.post("/", response_model=ModelVersionResponse)
 def register_version(
     payload: ModelVersionCreate, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
+    if current_user.role != RoleEnum.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can register model versions.")
+
     version = ModelVersion(**payload.model_dump())
 
     db.add(version)
@@ -21,14 +27,20 @@ def register_version(
     return version
 
 @router.get("/", response_model=list[ModelVersionResponse])
-def list_versions(db: Session = Depends(get_db)):
+def list_versions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user.role != RoleEnum.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can view model versions.")
     return db.query(ModelVersion).order_by(ModelVersion.created_at.desc()).all()
 
 @router.patch("/{version_id}/activate")
 def activate_version(
     version_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
+    if current_user.role != RoleEnum.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can activate model versions.")
+
     db.query(ModelVersion).update({"is_active": False})
     version = db.query(ModelVersion).filter(ModelVersion.id == version_id).first()
 
