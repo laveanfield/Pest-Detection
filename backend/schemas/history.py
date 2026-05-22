@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 from datetime import datetime
+from uuid import UUID
 
 class HistoryItemResponse(BaseModel):
     id: int
-    user_id: str
+    user_id: UUID | None
     batch_id: str | None = None
     status: str
     image_url: str | None = None

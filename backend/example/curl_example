@@ -1,5 +1,5 @@
 curl.exe -X POST "http://localhost:8000/predict/batch" `
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0cmkudHJhbjEzMDZAaGNtdXQuZWR1LnZuIiwicm9sZSI6InVzZXIiLCJpZCI6ImViMzIxY2IwLTc4NDktNGI0Yi1hMzE3LWQ5NTBlMWIwOTkwMCIsImV4cCI6MTc3OTQzOTU3Mn0.ut3P2-OewZVfyyXnFQyLXQMwf625SAYZOTzETPpsWpA"`
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0cmkudHJhbjEzMDZAaGNtdXQuZWR1LnZuIiwicm9sZSI6InVzZXIiLCJpZCI6IjYwNjljZDBmLThiNDktNDI1YS05MTg1LWY2ODI3ZTYwZjhiNCIsImV4cCI6MTc3OTQ0NjAwNH0.x7W-n3F3MoQgej8nnI9MIHll9_ZblIBRci_B4sx0Qng"`
   -F "confidence_threshold=0.25" `
   -F "files=@D:\University\semester6\DADN\Pest-Detection\backend\uploads\img1.jpg" `
   -F "files=@D:\University\semester6\DADN\Pest-Detection\backend\uploads\img2.jpg"
