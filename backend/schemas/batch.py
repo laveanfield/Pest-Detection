@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from uuid import UUID
 
 class BatchCreateResponse(BaseModel):
     batch_id: str
@@ -16,7 +17,7 @@ class BatchStatusResponse(BaseModel):
 class BatchSummaryResponse(BaseModel):
     id: int
     batch_id: str
-    user_id: str | None
+    user_id: UUID | None
     total_images: int
     finished_images: int
     failed_images: int

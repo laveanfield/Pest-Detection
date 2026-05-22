@@ -15,7 +15,6 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from db.database import Base
 
-
 class RoleEnum(str, Enum):
     USER = "user"
     ADMIN = "admin"
@@ -81,5 +80,10 @@ class User(Base):
 
     detections = relationship(
         "Detection",
+        back_populates="user"
+    )
+
+    batch_summaries = relationship(
+        "BatchSummary",
         back_populates="user"
     )

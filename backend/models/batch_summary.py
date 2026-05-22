@@ -1,13 +1,14 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.sql import func
 from db.database import Base
+from sqlalchemy.orm import relationship
 
 class BatchSummary(Base):
     __tablename__ = "batch_summaries"
 
     id = Column(Integer, primary_key=True, index=True)
     batch_id = Column(String, unique=True, index=True)
-    user_id = Column(String, nullable=True)
+    user_id = Column(ForeignKey("users.id"), nullable=False, index=True)
     total_images = Column(Integer, default=0)
     finished_images = Column(Integer, default=0)
     failed_images = Column(Integer, default=0)
@@ -17,3 +18,8 @@ class BatchSummary(Base):
     big_pest_total = Column(Integer, default=0)
     webhook_url = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship(
+        "User",
+        back_populates="batch_summaries"
+    )
