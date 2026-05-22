@@ -1,6 +1,12 @@
+import time
 from ultralytics import YOLO
 from pathlib import Path
 from utils.logger import get_logger
+from utils.metrics import (
+    INFERENCE_TIME, PEST_DETECTED,
+    DETECTION_WITH_PEST, DETECTION_WITHOUT_PEST,
+    CONFIDENCE_SCORE
+)
 
 logger = get_logger(__name__)
 
@@ -13,7 +19,11 @@ PEST_MAPPING = {
 def predict_image(file_path: str, conf: float = 0.25, model=None) -> dict:
     if model is None:
         raise ValueError("Model must be provided.")
+    
+    start = time.time()
     results = model.predict(source=file_path, conf=conf)
+    INFERENCE_TIME.observe(time.time() - start)
+
     result = results[0]
     
     input_path = Path(file_path)
@@ -29,12 +39,16 @@ def predict_image(file_path: str, conf: float = 0.25, model=None) -> dict:
         confidence = float(box.conf[0])
         x1, y1, x2, y2 = box.xyxy[0].tolist()
 
+        CONFIDENCE_SCORE.observe(confidence)
+
         real_name = PEST_MAPPING.get(class_name)
         if real_name is None:
             logger.warning(f"Unknown class: {class_name} !!!")
             continue
         
         counts[real_name] += 1
+        PEST_DETECTED.labels(pest_type=real_name).inc()
+
         boxes.append({
             "class_name": class_name,
             "confidence": round(confidence, 2),
@@ -43,6 +57,11 @@ def predict_image(file_path: str, conf: float = 0.25, model=None) -> dict:
             "x2"        : round(x2, 2),
             "y2"        : round(y2, 2),
         })
+    
+    if len(boxes) > 0:
+        DETECTION_WITH_PEST.inc()
+    else:
+        DETECTION_WITHOUT_PEST.inc()
 
     logger.info(
         f"Prediction done\n"

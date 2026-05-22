@@ -1,4 +1,4 @@
-path: C:/Users/ASUS/Downloads/pest-detection/pest_detection_training/data/dataset
+path: D:\IT\Computer Vision\Object Detection\pest_detection\pest_detection_training\data\dataset
  
 train: images/train
 val: images/val
