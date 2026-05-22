@@ -1,5 +1,5 @@
 import React from "react";
-import { Files, Loader2, Send, SlidersHorizontal, Webhook } from "lucide-react";
+import { Download, Files, Loader2, Send, SlidersHorizontal, Webhook } from "lucide-react";
 import StatTile from "./StatTile";
 import EmptyState from "./EmptyState";
 import StatusBadge from "./StatusBadge";
@@ -16,11 +16,15 @@ export default function BatchPredictionPanel({
   batchJob,
   batchStatus,
   batchSummary,
+  batchDetections,
   isBatchSubmitting,
+  downloadImage,
+  downloadBatchImages,
 }) {
   const isWorking = isBatchSubmitting || Boolean(batchJob);
   const completed = batchStatus ? batchStatus.finished + batchStatus.failed : 0;
   const progressValue = batchStatus?.total ? Math.round((completed / batchStatus.total) * 100) : 0;
+  const processedDetections = batchDetections.filter((item) => item.image_url);
 
   return (
     <section className="panel batch-panel">
@@ -103,6 +107,47 @@ export default function BatchPredictionPanel({
               <StatTile label="Round" value={batchSummary.round_pest_total} accent="#8d5fb8" />
               <StatTile label="Big" value={batchSummary.big_pest_total} accent="#bd3f59" />
               <StatTile label="Images Done" value={batchSummary.finished_images} accent="#1d7d73" />
+            </div>
+          )}
+
+          <div className="batch-results-heading">
+            <div>
+              <span className="section-kicker">Processed</span>
+              <h3>Batch Images</h3>
+            </div>
+            <button className="small-button" type="button" onClick={downloadBatchImages} disabled={!processedDetections.length}>
+              <Download size={15} />
+              Download All
+            </button>
+          </div>
+
+          {processedDetections.length ? (
+            <div className="batch-results-grid">
+              {processedDetections.map((item) => (
+                <article className="batch-result-card" key={item.id}>
+                  <div className="batch-result-image">
+                    <img src={item.image_url} alt={`Processed detection ${item.id}`} />
+                  </div>
+                  <div className="batch-result-meta">
+                    <div>
+                      <strong>#{item.id}</strong>
+                      <span>{item.total_count ?? 0} pests</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={() => downloadImage(item.image_url, `batch-${item.batch_id || "prediction"}-${item.id}.jpg`)}
+                      aria-label={`Download processed image ${item.id}`}
+                    >
+                      <Download size={17} />
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="batch-results-empty">
+              Processed images will appear here as the worker finishes them.
             </div>
           )}
         </div>

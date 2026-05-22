@@ -1,11 +1,12 @@
 import React from "react";
-import { Activity, BarChart3, Clock3, Eye, ShieldAlert } from "lucide-react";
+import { Activity, BarChart3, Clock3, Download, Eye, ShieldAlert } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import StatTile from "./StatTile";
 import EmptyState from "./EmptyState";
 
-export default function ResultPanel({ prediction, activeTab, setActiveTab, displayedImage, isWorking }) {
+export default function ResultPanel({ prediction, activeTab, setActiveTab, displayedImage, isWorking, downloadImage }) {
   const result = prediction?.result;
+  const downloadFilename = `prediction-${prediction?.id || "result"}-${activeTab === "cam" ? "cam" : "annotated"}.jpg`;
 
   return (
     <section className="panel result-panel">
@@ -19,23 +20,34 @@ export default function ResultPanel({ prediction, activeTab, setActiveTab, displ
 
       {result ? (
         <>
-          <div className="tabs" role="tablist" aria-label="Result image view">
+          <div className="result-toolbar">
+            <div className="tabs" role="tablist" aria-label="Result image view">
+              <button
+                type="button"
+                className={activeTab === "annotated" ? "active" : ""}
+                onClick={() => setActiveTab("annotated")}
+              >
+                <Eye size={16} />
+                Annotated
+              </button>
+              <button
+                type="button"
+                className={activeTab === "cam" ? "active" : ""}
+                onClick={() => setActiveTab("cam")}
+                disabled={!result.cam_url}
+              >
+                <Activity size={16} />
+                CAM
+              </button>
+            </div>
             <button
+              className="small-button"
               type="button"
-              className={activeTab === "annotated" ? "active" : ""}
-              onClick={() => setActiveTab("annotated")}
+              onClick={() => downloadImage(displayedImage, downloadFilename)}
+              disabled={!displayedImage}
             >
-              <Eye size={16} />
-              Annotated
-            </button>
-            <button
-              type="button"
-              className={activeTab === "cam" ? "active" : ""}
-              onClick={() => setActiveTab("cam")}
-              disabled={!result.cam_url}
-            >
-              <Activity size={16} />
-              CAM
+              <Download size={15} />
+              Download
             </button>
           </div>
 

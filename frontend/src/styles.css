@@ -384,10 +384,17 @@ button:disabled {
   display: inline-flex;
   gap: 6px;
   padding: 4px;
-  margin-bottom: 12px;
   border: 1px solid #d7d0c2;
   border-radius: 8px;
   background: #f5f2e9;
+}
+
+.result-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .tabs button {
@@ -408,15 +415,18 @@ button:disabled {
   display: grid;
   place-items: center;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  height: clamp(280px, 48vh, 520px);
+  padding: 10px;
   overflow: hidden;
   border-radius: 8px;
   background: #101815;
 }
 
 .result-image img {
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 
@@ -598,6 +608,74 @@ th {
   margin-top: 18px;
 }
 
+.batch-results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.batch-results-heading h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.batch-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.batch-result-card {
+  overflow: hidden;
+  border: 1px solid #e2dcd1;
+  border-radius: 8px;
+  background: #fffefa;
+}
+
+.batch-result-image {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #101815;
+}
+
+.batch-result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.batch-result-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+}
+
+.batch-result-meta strong,
+.batch-result-meta span {
+  display: block;
+}
+
+.batch-result-meta span {
+  margin-top: 2px;
+  color: #69736b;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.batch-results-empty {
+  padding: 16px;
+  border: 1px dashed #cfc8ba;
+  border-radius: 8px;
+  color: #68726a;
+  text-align: center;
+}
+
 .progress-row {
   display: flex;
   align-items: center;
@@ -684,6 +762,11 @@ th {
   .count-grid,
   .compact-inputs {
     grid-template-columns: 1fr;
+  }
+
+  .result-toolbar {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .upload-panel,
