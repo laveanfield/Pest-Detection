@@ -1,13 +1,15 @@
 import React from "react";
 import { ImageUp, ListPlus, LogOut } from "lucide-react";
 
-const navItems = [
-  // { id: "models", label: "Models", icon: Brain },
-  { id: "prediction", label: "Prediction", icon: ImageUp },
-  { id: "register", label: "Register Model", icon: ListPlus },
-];
+export default function AppNavigation({ activePage, onNavigate, onLogout, currentUser }) {
+  const navItems = [];
 
-export default function AppNavigation({ activePage, setActivePage, onLogout, currentUser }) {
+  if (currentUser?.role === "admin") {
+    navItems.push({ id: "register", label: "Register Model", icon: ListPlus });
+  } else {
+    navItems.push({ id: "prediction", label: "Prediction", icon: ImageUp });
+  }
+
   return (
     <nav className="app-nav" aria-label="Primary navigation">
       <div className="nav-brand">
@@ -23,7 +25,7 @@ export default function AppNavigation({ activePage, setActivePage, onLogout, cur
               key={item.id}
               type="button"
               className={activePage === item.id ? "active" : ""}
-              onClick={() => setActivePage(item.id)}
+              onClick={() => onNavigate(item.id)}
             >
               <Icon size={18} />
               {item.label}
