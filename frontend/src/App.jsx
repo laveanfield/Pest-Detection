@@ -2,20 +2,70 @@ import React from "react";
 import { RefreshCw, ShieldAlert } from "lucide-react";
 
 import "./styles.css";
-import { apiRequest } from "./services/api";
+import { apiRequest, clearToken, getCurrentUser, getToken } from "./services/api";
 import AppNavigation from "./components/AppNavigation";
 import BatchPredictionPanel from "./components/BatchPredictionPanel";
 import DashboardStats from "./components/DashboardStats";
 import UploadPanel from "./components/UploadPanel";
 import ResultPanel from "./components/ResultPanel";
 import ModelRegistry from "./components/ModelRegistry";
-import HistoryTable from "./components/HistoryTable";
+import HistoryTable, {formatDate} from "./components/HistoryTable";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 const DEFAULT_USER_ID = "demo-user";
+const ROUTES = {
+  login: "/login",
+  register: "/register",
+  forgotPassword: "/forgot-password",
+  app: "/console",
+};
 
-export default function App() {
+function routeFromPath(pathname) {
+  if (pathname === ROUTES.register) return "register";
+  if (pathname === ROUTES.forgotPassword) return "forgotPassword";
+  if (pathname === ROUTES.app) return getToken() ? "app" : "login";
+  return getToken() ? "app" : "login";
+}
+
+// ── Auth gate ─────────────────────────────────────────────────────────────────
+// "login" | "register" | "forgotPassword" | "app"
+function useAuthRoute() {
+  const [route, setRouteState] = React.useState(() => routeFromPath(window.location.pathname));
+
+  const setRoute = React.useCallback((nextRoute, options = {}) => {
+    const safeRoute = nextRoute === "app" && !getToken() ? "login" : nextRoute;
+    const nextPath = ROUTES[safeRoute] || ROUTES.login;
+
+    setRouteState(safeRoute);
+    if (window.location.pathname !== nextPath) {
+      const method = options.replace ? "replaceState" : "pushState";
+      window.history[method]({}, "", nextPath);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const normalizedRoute = routeFromPath(window.location.pathname);
+    setRoute(normalizedRoute, { replace: true });
+  }, [setRoute]);
+
+  React.useEffect(() => {
+    const handlePopState = () => {
+      setRouteState(routeFromPath(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  return { route, setRoute };
+}
+
+export function MainApp({ onLogout }) {
   const [activePage, setActivePage] = React.useState("prediction");
   const [userId, setUserId] = React.useState(() => localStorage.getItem("pest-user-id") || DEFAULT_USER_ID);
+  const [currentUser, setCurrentUser] = React.useState(null);
   const [file, setFile] = React.useState(null);
   const [previewUrl, setPreviewUrl] = React.useState("");
   const [confidence, setConfidence] = React.useState(0.25);
@@ -49,6 +99,29 @@ export default function App() {
   }, [userId]);
 
   React.useEffect(() => {
+    let cancelled = false;
+
+    const loadCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser(getToken());
+        if (cancelled) return;
+        setCurrentUser(user);
+        setUserId(user.id || DEFAULT_USER_ID);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message);
+          onLogout();
+        }
+      }
+    };
+
+    loadCurrentUser();
+    return () => {
+      cancelled = true;
+    };
+  }, [onLogout]);
+
+  React.useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
@@ -58,20 +131,38 @@ export default function App() {
     setIsRefreshing(true);
     setError("");
     try {
-      const [nextStats, nextHistory, nextModels] = await Promise.all([
-        apiRequest("/stats/"),
-        apiRequest(`/history/?user_id=${encodeURIComponent(userId || DEFAULT_USER_ID)}&limit=12`),
-        apiRequest("/models/"),
-      ]);
-      setStats(nextStats);
-      setHistory(nextHistory);
-      setModels(nextModels);
+      const promises = [apiRequest("/stats/"), apiRequest("/history/?limit=12")];
+
+      // only fetch models when the user is on the registration page
+      const shouldFetchModels = activePage === "register";
+      if (shouldFetchModels) promises.push(apiRequest("/models/"));
+
+      const results = await Promise.allSettled(promises);
+
+      // stats
+      if (results[0].status === "fulfilled") setStats(results[0].value);
+      else setStats(null);
+
+      // history
+      if (results[1].status === "fulfilled") setHistory(results[1].value);
+      else setHistory([]);
+
+      // models (only present when requested)
+      if (shouldFetchModels) {
+        const modelsResult = results[2];
+        if (modelsResult?.status === "fulfilled") setModels(modelsResult.value);
+        else setModels([]);
+      }
+
+      // surface first error but don't block successful results
+      const firstRejected = results.find((r) => r.status === "rejected");
+      if (firstRejected) setError(firstRejected.reason?.message || String(firstRejected.reason));
     } catch (err) {
       setError(err.message);
     } finally {
       setIsRefreshing(false);
     }
-  }, [userId]);
+  }, [activePage]);
 
   React.useEffect(() => {
     refreshDashboard();
@@ -112,11 +203,20 @@ export default function App() {
     let cancelled = false;
     const pollBatch = async () => {
       try {
-        const [status, nextHistory] = await Promise.all([
+        const results = await Promise.allSettled([
           apiRequest(`/predict/batch/${batchJob.batch_id}`),
-          apiRequest(`/history/?user_id=${encodeURIComponent(userId || DEFAULT_USER_ID)}&limit=100`),
+          apiRequest("/history/?limit=100"),
         ]);
         if (cancelled) return;
+
+        if (results[0].status === "rejected") {
+          // can't proceed without status; cancel this batch polling cycle
+          if (!cancelled) setError(results[0].reason?.message || String(results[0].reason));
+          return;
+        }
+
+        const status = results[0].value;
+        const nextHistory = results[1].status === "fulfilled" ? results[1].value : [];
 
         setBatchStatus(status);
         setBatchDetections(nextHistory.filter((item) => item.batch_id === batchJob.batch_id));
@@ -149,7 +249,7 @@ export default function App() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [batchJob, refreshDashboard, userId]);
+  }, [batchJob, refreshDashboard]);
 
   const handleFileChange = (event) => {
     const nextFile = event.target.files?.[0];
@@ -172,7 +272,6 @@ export default function App() {
     setPrediction(null);
     try {
       const formData = new FormData();
-      formData.append("user_id", userId || DEFAULT_USER_ID);
       formData.append("file", file);
       formData.append("confidence_threshold", confidence);
       const result = await apiRequest(`/predict/`, {
@@ -210,7 +309,6 @@ export default function App() {
     setBatchDetections([]);
     try {
       const formData = new FormData();
-      formData.append("user_id", userId || DEFAULT_USER_ID);
       formData.append("confidence_threshold", batchConfidence);
       if (webhookUrl.trim()) formData.append("webhook_url", webhookUrl.trim());
       batchFiles.forEach((batchFile) => formData.append("files", batchFile));
@@ -307,7 +405,7 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      <AppNavigation activePage={activePage} setActivePage={setActivePage} />
+      <AppNavigation activePage={activePage} setActivePage={setActivePage} onLogout={onLogout} currentUser={currentUser} />
       <main className="app-shell">
         <section className="topbar">
           <div>
@@ -325,16 +423,9 @@ export default function App() {
             <span>{error}</span>
           </div>
         )}
-
-        {/* {activePage === "models" && (
-          <section className="focused-grid">
-            <ModelRegistry models={models} handleActivateModel={handleActivateModel} />
-          </section>
-        )} */}
-
         {activePage === "prediction" && (
           <>
-            <DashboardStats stats={stats} />
+            {/* <DashboardStats stats={stats} /> */}
 
             <section className="workspace-grid">
               <UploadPanel
@@ -396,4 +487,56 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+// ── Root ──────────────────────────────────────────────────────────────────────
+export default function App() {
+  const { route, setRoute } = useAuthRoute();
+
+  const handleLoginSuccess = () => setRoute("app", { replace: true });
+
+  // After OTP verified → go to login so the user signs in properly
+  const handleVerified = () => {
+    setRoute("login", { replace: true });
+  };
+
+  const handleLogout = () => {
+    clearToken();
+    setRoute("login", { replace: true });
+  };
+
+  React.useEffect(() => {
+    window.addEventListener("auth:logout", handleLogout);
+    return () => window.removeEventListener("auth:logout", handleLogout);
+  }, []);
+
+  if (route === "login") {
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onGoToRegister={() => setRoute("register")}
+        onGoToForgotPassword={() => setRoute("forgotPassword")}
+      />
+    );
+  }
+
+  if (route === "forgotPassword") {
+    return (
+      <ForgotPasswordPage
+        onGoToLogin={() => setRoute("login")}
+        onResetSuccess={() => setRoute("login", { replace: true })}
+      />
+    );
+  }
+
+  if (route === "register") {
+    return (
+      <RegisterPage
+        onGoToLogin={() => setRoute("login")}
+        onVerified={handleVerified}
+      />
+    );
+  }
+
+  return <MainApp onLogout={handleLogout} />;
 }

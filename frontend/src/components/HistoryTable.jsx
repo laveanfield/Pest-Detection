@@ -2,7 +2,7 @@ import React from "react";
 import { History } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
-const formatDate = (value) => {
+export const formatDate = (value) => {
   if (!value) return "Unknown";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown";

@@ -1,5 +1,5 @@
 import React from "react";
-import { Brain, ImageUp, ListPlus } from "lucide-react";
+import { ImageUp, ListPlus, LogOut } from "lucide-react";
 
 const navItems = [
   // { id: "models", label: "Models", icon: Brain },
@@ -7,12 +7,13 @@ const navItems = [
   { id: "register", label: "Register Model", icon: ListPlus },
 ];
 
-export default function AppNavigation({ activePage, setActivePage }) {
+export default function AppNavigation({ activePage, setActivePage, onLogout, currentUser }) {
   return (
     <nav className="app-nav" aria-label="Primary navigation">
       <div className="nav-brand">
         <span>Pest Detection</span>
         <strong>Console</strong>
+        {currentUser?.email && <small>{currentUser.email}</small>}
       </div>
       <div className="nav-links">
         {navItems.map((item) => {
@@ -30,6 +31,10 @@ export default function AppNavigation({ activePage, setActivePage }) {
           );
         })}
       </div>
+      <button className="logout-button" type="button" onClick={onLogout}>
+        <LogOut size={18} />
+        Logout
+      </button>
     </nav>
   );
 }
