@@ -8,7 +8,7 @@ from services.user_service import hash_password
 db: Session = SessionLocal()
 
 admin = db.query(User).filter(
-    User.email == "admin"
+    User.email == "admin@pest.local"
 ).first()
 
 if not admin:

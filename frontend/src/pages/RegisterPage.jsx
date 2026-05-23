@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useRegister, useVerifyOtp } from "../services/useAuth";
 
-// ── Step 1: Registration form ────────────────────────────────────────────────
 function RegisterForm({ onOtpRequired, onGoToLogin }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -105,7 +104,6 @@ function RegisterForm({ onOtpRequired, onGoToLogin }) {
   );
 }
 
-// ── Step 2: OTP verification ─────────────────────────────────────────────────
 function OtpForm({ email, onVerified, onBack }) {
   const [otp, setOtp] = useState("");
   const { submit, loading, error } = useVerifyOtp(onVerified);
@@ -171,7 +169,6 @@ function OtpForm({ email, onVerified, onBack }) {
   );
 }
 
-// ── Main register page ────────────────────────────────────────────────────────
 export default function RegisterPage({ onGoToLogin, onVerified }) {
   // pendingEmail: null = show form, string = show OTP step
   const [pendingEmail, setPendingEmail] = useState(null);

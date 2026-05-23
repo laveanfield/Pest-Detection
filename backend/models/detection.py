@@ -6,7 +6,7 @@ from db.database import Base
 class Detection(Base):
     __tablename__ = "detections"
     
-    user_id = Column(ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(String, unique=True)
     batch_id = Column(String, nullable=True, index=True)

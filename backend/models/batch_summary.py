@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import UUID, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.sql import func
 from db.database import Base
 from sqlalchemy.orm import relationship
@@ -8,7 +8,7 @@ class BatchSummary(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     batch_id = Column(String, unique=True, index=True)
-    user_id = Column(ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     total_images = Column(Integer, default=0)
     finished_images = Column(Integer, default=0)
     failed_images = Column(Integer, default=0)
