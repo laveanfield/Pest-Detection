@@ -24,11 +24,24 @@ const ROUTES = {
 };
 
 function routeFromPath(pathname) {
-  if (pathname === ROUTES.register) return "register";
-  if (pathname === ROUTES.forgotPassword) return "forgotPassword";
-  if (pathname === ROUTES.models) return getToken() ? "models" : "login";
-  if (pathname === ROUTES.console) return getToken() ? "console" : "login";
-  return getToken() ? "console" : "login";
+  const token = getToken();
+  const storedRole = localStorage.getItem("pest-user-role");
+  
+  if (pathname === ROUTES.register) {
+    if (token) {
+      return storedRole === "admin" ? "models" : "console";
+    }
+    return "register";
+  }
+  if (pathname === ROUTES.forgotPassword) {
+    if (token) {
+      return storedRole === "admin" ? "models" : "console";
+    }
+    return "forgotPassword";
+  }
+  if (pathname === ROUTES.models) return token ? "models" : "login";
+  if (pathname === ROUTES.console) return token ? "console" : "login";
+  return token ? (storedRole === "admin" ? "models" : "console") : "login";
 }
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -110,6 +123,7 @@ export function MainApp({ onLogout, route, setRoute }) {
         if (cancelled) return;
         setCurrentUser(user);
         setUserId(user.id || DEFAULT_USER_ID);
+        localStorage.setItem("pest-user-role", user.role || "user");
       } catch (err) {
         if (!cancelled) {
           setError(err.message);
@@ -140,35 +154,18 @@ export function MainApp({ onLogout, route, setRoute }) {
     };
   }, [previewUrl]);
 
-  const refreshDashboard = React.useCallback(async () => {
+  // ── Console Route: Fetch prediction dashboard data ────────────────────────
+  const refreshConsoleDashboard = React.useCallback(async () => {
     setIsRefreshing(true);
     setError("");
     try {
-      const shouldFetchModels = route === "models";
-      const shouldFetchDashboard = route === "console";
-      const promises = [];
+      const results = await Promise.allSettled([
+        apiRequest("/stats/"),
+        apiRequest("/history/?limit=12"),
+      ]);
 
-      if (shouldFetchDashboard) {
-        promises.push(apiRequest("/stats/"), apiRequest("/history/?limit=12"));
-      }
-      if (shouldFetchModels) {
-        promises.push(apiRequest("/models/"));
-      }
-
-      const results = await Promise.allSettled(promises);
-
-      if (shouldFetchDashboard) {
-        // stats
-        if (results[0].status === "fulfilled") setStats(results[0].value);
-        // history
-        if (results[1].status === "fulfilled") setHistory(results[1].value);
-      }
-
-      if (shouldFetchModels) {
-        const modelsResultIndex = shouldFetchDashboard ? 2 : 0;
-        const modelsResult = results[modelsResultIndex];
-        if (modelsResult?.status === "fulfilled") setModels(modelsResult.value);
-      }
+      if (results[0].status === "fulfilled") setStats(results[0].value);
+      if (results[1].status === "fulfilled") setHistory(results[1].value);
 
       const firstRejected = results.find((r) => r.status === "rejected");
       if (firstRejected) setError(firstRejected.reason?.message || String(firstRejected.reason));
@@ -177,11 +174,50 @@ export function MainApp({ onLogout, route, setRoute }) {
     } finally {
       setIsRefreshing(false);
     }
-  }, [activePage]);
+  }, []);
+
+  // ── Models Route: Fetch model registry data ─────────────────────────────
+  const refreshModelsDashboard = React.useCallback(async () => {
+    setIsRefreshing(true);
+    setError("");
+    try {
+      const result = await apiRequest("/models/");
+      setModels(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  // ── Route handler: Navigate and fetch data for console ───────────────────
+  const navigateToConsole = React.useCallback(() => {
+    setRoute("console");
+    refreshConsoleDashboard();
+  }, [setRoute, refreshConsoleDashboard]);
+
+  // ── Route handler: Navigate and fetch data for models ────────────────────
+  const navigateToModels = React.useCallback(() => {
+    setRoute("models");
+    refreshModelsDashboard();
+  }, [setRoute, refreshModelsDashboard]);
+
+  // ── Unified refresh for current page (used by polling and UI) ────────────
+  const refreshCurrentPage = React.useCallback(() => {
+    if (route === "console") {
+      refreshConsoleDashboard();
+    } else if (route === "models") {
+      refreshModelsDashboard();
+    }
+  }, [route, refreshConsoleDashboard, refreshModelsDashboard]);
 
   React.useEffect(() => {
-    refreshDashboard();
-  }, [refreshDashboard]);
+    if (route === "console") {
+      refreshConsoleDashboard();
+    } else if (route === "models") {
+      refreshModelsDashboard();
+    }
+  }, [route, refreshConsoleDashboard, refreshModelsDashboard]);
 
   React.useEffect(() => {
     if (!currentJob?.id) return undefined;
@@ -194,7 +230,7 @@ export function MainApp({ onLogout, route, setRoute }) {
         setPrediction(result);
         if (["FINISHED", "FAILED"].includes(result.status)) {
           setCurrentJob(null);
-          refreshDashboard();
+          refreshCurrentPage();
         }
       } catch (err) {
         if (!cancelled) {
@@ -210,7 +246,7 @@ export function MainApp({ onLogout, route, setRoute }) {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [currentJob, refreshDashboard]);
+  }, [currentJob, refreshCurrentPage]);
 
   React.useEffect(() => {
     if (!batchJob?.batch_id) return undefined;
@@ -247,7 +283,7 @@ export function MainApp({ onLogout, route, setRoute }) {
 
           if (!cancelled) {
             setBatchJob(null);
-            refreshDashboard();
+            refreshCurrentPage();
           }
         }
       } catch (err) {
@@ -264,7 +300,7 @@ export function MainApp({ onLogout, route, setRoute }) {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [batchJob, refreshDashboard]);
+  }, [batchJob, refreshCurrentPage]);
 
   const handleFileChange = (event) => {
     const nextFile = event.target.files?.[0];
@@ -364,7 +400,7 @@ export function MainApp({ onLogout, route, setRoute }) {
         body: JSON.stringify(payload),
       });
       setModelForm({ name: "", file_path: "", description: "", mAP50: "", mAP50_95: "" });
-      refreshDashboard();
+      refreshModelsDashboard();
     } catch (err) {
       setError(err.message);
     }
@@ -374,7 +410,7 @@ export function MainApp({ onLogout, route, setRoute }) {
     setError("");
     try {
       await apiRequest(`/models/${modelId}/activate`, { method: "PATCH" });
-      refreshDashboard();
+      refreshModelsDashboard();
     } catch (err) {
       setError(err.message);
     }
@@ -432,7 +468,7 @@ export function MainApp({ onLogout, route, setRoute }) {
             <p className="eyebrow">{pageEyebrow}</p>
             <h1>{pageTitle}</h1>
           </div>
-          <button className="icon-button" type="button" onClick={refreshDashboard} aria-label="Refresh dashboard">
+          <button className="icon-button" type="button" onClick={refreshCurrentPage} aria-label="Refresh dashboard">
             <RefreshCw size={18} className={isRefreshing ? "spin" : ""} />
           </button>
         </section>
@@ -522,6 +558,7 @@ export default function App() {
 
   const handleLogout = () => {
     clearToken();
+    localStorage.removeItem("pest-user-role");
     setRoute("login", { replace: true });
   };
 
