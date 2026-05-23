@@ -9,6 +9,9 @@ from celery import Celery
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from models.detection import Detection
+from models.user import User
+from models.batch_summary import BatchSummary
+from models.model_version import ModelVersion
 from services.model_registry import ModelRegistry
 from services.detection_service import process_detection
 from services.batch_service import summarize_batch, send_webhook

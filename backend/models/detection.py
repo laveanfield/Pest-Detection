@@ -1,11 +1,12 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import UUID, Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.database import Base
 
 class Detection(Base):
     __tablename__ = "detections"
     
-    user_id = Column(String, index=True)
+    user_id = Column(ForeignKey("users.id"), nullable=False, index=True)
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(String, unique=True)
     batch_id = Column(String, nullable=True, index=True)
@@ -18,3 +19,7 @@ class Detection(Base):
     big_pest_count = Column(Integer, default=0)
     confidence_threshold = Column(Float, default=0.25)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    user = relationship(
+        "User",
+        back_populates="detections"
+    )

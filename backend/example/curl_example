@@ -1,5 +1,5 @@
 curl.exe -X POST "http://localhost:8000/predict/batch" `
-  -F "user_id=aaa" `
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0cmkudHJhbjEzMDZAaGNtdXQuZWR1LnZuIiwicm9sZSI6InVzZXIiLCJpZCI6IjYwNjljZDBmLThiNDktNDI1YS05MTg1LWY2ODI3ZTYwZjhiNCIsImV4cCI6MTc3OTQ0NjAwNH0.x7W-n3F3MoQgej8nnI9MIHll9_ZblIBRci_B4sx0Qng"`
   -F "confidence_threshold=0.25" `
-  -F "files=@D:\IT\Computer Vision\Object Detection\pest_detection\uploads\img1.jpg" `
-  -F "files=@D:\IT\Computer Vision\Object Detection\pest_detection\uploads\img2.jpg"
+  -F "files=@D:\University\semester6\DADN\Pest-Detection\backend\uploads\img1.jpg" `
+  -F "files=@D:\University\semester6\DADN\Pest-Detection\backend\uploads\img2.jpg"
