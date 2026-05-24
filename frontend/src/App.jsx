@@ -9,7 +9,7 @@ import DashboardStats from "./components/DashboardStats";
 import UploadPanel from "./components/UploadPanel";
 import ResultPanel from "./components/ResultPanel";
 import ModelRegistry from "./components/ModelRegistry";
-import HistoryTable, {formatDate} from "./components/HistoryTable";
+import HistoryTable from "./components/HistoryTable";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -82,6 +82,8 @@ export function MainApp({ onLogout, route, setRoute }) {
   const activePage = route === "models" ? "register" : "prediction";
   const [userId, setUserId] = React.useState(() => localStorage.getItem("pest-user-id") || DEFAULT_USER_ID);
   const [currentUser, setCurrentUser] = React.useState(null);
+  const isAdmin = currentUser?.role === "admin";
+  const isUser = currentUser?.role === "user";
   const [file, setFile] = React.useState(null);
   const [previewUrl, setPreviewUrl] = React.useState("");
   const [confidence, setConfidence] = React.useState(0.25);
@@ -140,13 +142,14 @@ export function MainApp({ onLogout, route, setRoute }) {
 
   React.useEffect(() => {
     if (!currentUser) return;
-    if (currentUser.role === "admin" && route !== "models") {
+    setError("");
+    if (isAdmin && route !== "models") {
       setRoute("models", { replace: true });
     }
-    if (currentUser.role !== "admin" && route !== "console") {
+    if (isUser && route !== "console") {
       setRoute("console", { replace: true });
     }
-  }, [currentUser, route, setRoute]);
+  }, [currentUser, isAdmin, isUser, route, setRoute]);
 
   React.useEffect(() => {
     return () => {
@@ -156,6 +159,8 @@ export function MainApp({ onLogout, route, setRoute }) {
 
   // ── Console Route: Fetch prediction dashboard data ────────────────────────
   const refreshConsoleDashboard = React.useCallback(async () => {
+    if (!isUser) return;
+
     setIsRefreshing(true);
     setError("");
     try {
@@ -174,10 +179,12 @@ export function MainApp({ onLogout, route, setRoute }) {
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [isUser]);
 
   // ── Models Route: Fetch model registry data ─────────────────────────────
   const refreshModelsDashboard = React.useCallback(async () => {
+    if (!isAdmin) return;
+
     setIsRefreshing(true);
     setError("");
     try {
@@ -188,36 +195,26 @@ export function MainApp({ onLogout, route, setRoute }) {
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
-
-  // ── Route handler: Navigate and fetch data for console ───────────────────
-  const navigateToConsole = React.useCallback(() => {
-    setRoute("console");
-    refreshConsoleDashboard();
-  }, [setRoute, refreshConsoleDashboard]);
-
-  // ── Route handler: Navigate and fetch data for models ────────────────────
-  const navigateToModels = React.useCallback(() => {
-    setRoute("models");
-    refreshModelsDashboard();
-  }, [setRoute, refreshModelsDashboard]);
+  }, [isAdmin]);
 
   // ── Unified refresh for current page (used by polling and UI) ────────────
   const refreshCurrentPage = React.useCallback(() => {
-    if (route === "console") {
+    if (route === "console" && isUser) {
       refreshConsoleDashboard();
-    } else if (route === "models") {
+    } else if (route === "models" && isAdmin) {
       refreshModelsDashboard();
     }
-  }, [route, refreshConsoleDashboard, refreshModelsDashboard]);
+  }, [route, isUser, isAdmin, refreshConsoleDashboard, refreshModelsDashboard]);
 
   React.useEffect(() => {
-    if (route === "console") {
+    if (!currentUser) return;
+
+    if (route === "console" && isUser) {
       refreshConsoleDashboard();
-    } else if (route === "models") {
+    } else if (route === "models" && isAdmin) {
       refreshModelsDashboard();
     }
-  }, [route, refreshConsoleDashboard, refreshModelsDashboard]);
+  }, [currentUser, route, isUser, isAdmin, refreshConsoleDashboard, refreshModelsDashboard]);
 
   React.useEffect(() => {
     if (!currentJob?.id) return undefined;
@@ -473,13 +470,19 @@ export function MainApp({ onLogout, route, setRoute }) {
           </button>
         </section>
 
+        {!currentUser && (
+          <section className="panel loading-panel">
+            Loading console...
+          </section>
+        )}
+
         {error && (
           <div className="alert" role="alert">
             <ShieldAlert size={18} />
             <span>{error}</span>
           </div>
         )}
-        {activePage === "prediction" && (
+        {currentUser && activePage === "prediction" && (
           <>
             {/* <DashboardStats stats={stats} /> */}
 
@@ -528,7 +531,7 @@ export function MainApp({ onLogout, route, setRoute }) {
           </>
         )}
 
-        {activePage === "register" && (
+        {currentUser && activePage === "register" && (
           <section className="focused-grid">
             <ModelRegistry
               models={models}
@@ -549,23 +552,27 @@ export function MainApp({ onLogout, route, setRoute }) {
 export default function App() {
   const { route, setRoute } = useAuthRoute();
 
-  const handleLoginSuccess = () => setRoute("console", { replace: true });
+  const handleLoginSuccess = React.useCallback(() => {
+    const storedRole = localStorage.getItem("pest-user-role");
+    setRoute(storedRole === "admin" ? "models" : "console", { replace: true });
+  }, [setRoute]);
 
   // After OTP verified → go to login so the user signs in properly
-  const handleVerified = () => {
+  const handleVerified = React.useCallback(() => {
     setRoute("login", { replace: true });
-  };
+  }, [setRoute]);
 
-  const handleLogout = () => {
+  const handleLogout = React.useCallback(() => {
     clearToken();
+    localStorage.removeItem("pest-user-id");
     localStorage.removeItem("pest-user-role");
     setRoute("login", { replace: true });
-  };
+  }, [setRoute]);
 
   React.useEffect(() => {
     window.addEventListener("auth:logout", handleLogout);
     return () => window.removeEventListener("auth:logout", handleLogout);
-  }, []);
+  }, [handleLogout]);
 
   if (route === "login") {
     return (

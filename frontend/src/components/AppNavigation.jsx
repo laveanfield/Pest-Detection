@@ -4,7 +4,9 @@ import { ImageUp, ListPlus, LogOut } from "lucide-react";
 export default function AppNavigation({ activePage, onNavigate, onLogout, currentUser }) {
   const navItems = [];
 
-  if (currentUser?.role === "admin") {
+  if (!currentUser) {
+    // Wait for /auth/me before exposing role-specific navigation.
+  } else if (currentUser.role === "admin") {
     navItems.push({ id: "register", label: "Register Model", icon: ListPlus });
   } else {
     navItems.push({ id: "prediction", label: "Prediction", icon: ImageUp });

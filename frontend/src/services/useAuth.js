@@ -21,6 +21,8 @@ export function useLogin(onSuccess) {
         try {
             const data = await loginUser({ email, password });
             saveToken(data.access_token);
+            if (data.user?.id) localStorage.setItem("pest-user-id", data.user.id);
+            if (data.user?.role) localStorage.setItem("pest-user-role", data.user.role);
             onSuccess?.(data);
         } catch (err) {
             setError(err.message);
