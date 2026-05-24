@@ -44,8 +44,6 @@ function routeFromPath(pathname) {
   return token ? (storedRole === "admin" ? "models" : "console") : "login";
 }
 
-// ── Auth gate ─────────────────────────────────────────────────────────────────
-// "login" | "register" | "forgotPassword" | "app"
 function useAuthRoute() {
   const [route, setRouteState] = React.useState(() => routeFromPath(window.location.pathname));
 
@@ -154,7 +152,6 @@ export function MainApp({ onLogout, route, setRoute }) {
     };
   }, [previewUrl]);
 
-  // ── Console Route: Fetch prediction dashboard data ────────────────────────
   const refreshConsoleDashboard = React.useCallback(async () => {
     setIsRefreshing(true);
     setError("");
@@ -176,7 +173,6 @@ export function MainApp({ onLogout, route, setRoute }) {
     }
   }, []);
 
-  // ── Models Route: Fetch model registry data ─────────────────────────────
   const refreshModelsDashboard = React.useCallback(async () => {
     setIsRefreshing(true);
     setError("");
@@ -190,19 +186,16 @@ export function MainApp({ onLogout, route, setRoute }) {
     }
   }, []);
 
-  // ── Route handler: Navigate and fetch data for console ───────────────────
   const navigateToConsole = React.useCallback(() => {
     setRoute("console");
     refreshConsoleDashboard();
   }, [setRoute, refreshConsoleDashboard]);
 
-  // ── Route handler: Navigate and fetch data for models ────────────────────
   const navigateToModels = React.useCallback(() => {
     setRoute("models");
     refreshModelsDashboard();
   }, [setRoute, refreshModelsDashboard]);
 
-  // ── Unified refresh for current page (used by polling and UI) ────────────
   const refreshCurrentPage = React.useCallback(() => {
     if (route === "console") {
       refreshConsoleDashboard();
@@ -545,13 +538,11 @@ export function MainApp({ onLogout, route, setRoute }) {
   );
 }
 
-// ── Root ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const { route, setRoute } = useAuthRoute();
 
   const handleLoginSuccess = () => setRoute("console", { replace: true });
 
-  // After OTP verified → go to login so the user signs in properly
   const handleVerified = () => {
     setRoute("login", { replace: true });
   };
