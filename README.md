@@ -62,7 +62,7 @@ Pest-Detection/
 - PostgreSQL
 - Redis
 
-### Backend dependencies (`backend/requirements.txt`)
+### Backend dependencies
 
 ```
 fastapi
@@ -92,7 +92,7 @@ python-jose[cryptography]
 passlib[bcrypt]
 ```
 
-### Training dependencies (`pest_detection_training/requirements_training.txt`)
+### Training dependencies
 
 ```
 ultralytics
