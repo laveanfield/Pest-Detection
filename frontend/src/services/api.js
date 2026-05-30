@@ -61,10 +61,8 @@ export async function resetPassword({ email, otp, new_password }) {
   	return apiRequest(`/auth/reset-password?${params}`, { method: "POST" });
 }
 
-export async function getCurrentUser(token) {
-  	return apiRequest("/auth/me", {
-    	headers: { Authorization: `Bearer ${token}` },
-  	});
+export async function getCurrentUser() {
+  	return apiRequest("/auth/me");
 }
 
 // ── Token helpers ─────────────────────────────────────────────────────────────

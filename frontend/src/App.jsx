@@ -121,7 +121,7 @@ export function MainApp({ onLogout, route, setRoute }) {
 
     const loadCurrentUser = async () => {
       try {
-        const user = await getCurrentUser(getToken());
+        const user = await getCurrentUser();
         if (cancelled) return;
         setCurrentUser(user);
         setUserId(user.id || DEFAULT_USER_ID);
