@@ -16,6 +16,7 @@ A pest detection system built with FastAPI, YOLOv8, Celery, and PostgreSQL. The 
 
 ```
 Pest-Detection/
+├── assets/
 ├── backend/
 │   ├── api/                  # Route handlers
 │   ├── db/                   # Database engine and session setup
@@ -143,12 +144,6 @@ uvicorn main:app --reload
 
 ```bash
 python seed_admin.py
-```
-
-#### Celery worker (in a separate terminal)
-
-```bash
-celery -A worker.celery_app worker --loglevel=info --concurrency=1
 ```
 
 ## Training
