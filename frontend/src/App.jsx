@@ -2,7 +2,7 @@ import React from "react";
 import { RefreshCw, ShieldAlert } from "lucide-react";
 
 import "./styles.css";
-import { apiRequest, clearToken, getCurrentUser, getToken } from "./services/api";
+import { ApiError, apiRequest, clearToken, getCurrentUser, getToken } from "./services/api";
 import AppNavigation from "./components/AppNavigation";
 import BatchPredictionPanel from "./components/BatchPredictionPanel";
 import DashboardStats from "./components/DashboardStats";
@@ -119,6 +119,11 @@ export function MainApp({ onLogout, route, setRoute }) {
 
     const loadCurrentUser = async () => {
       try {
+        if (!getToken()) {
+          onLogout();
+          return;
+        }
+
         const user = await getCurrentUser();
         if (cancelled) return;
         setCurrentUser(user);
@@ -126,8 +131,11 @@ export function MainApp({ onLogout, route, setRoute }) {
         localStorage.setItem("pest-user-role", user.role || "user");
       } catch (err) {
         if (!cancelled) {
-          setError(err.message);
-          onLogout();
+          if (err instanceof ApiError && err.status === 401) {
+            onLogout();
+          } else {
+            setError(err.message);
+          }
         }
       }
     };

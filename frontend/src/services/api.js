@@ -11,53 +11,63 @@ const getErrorMessage = async (response) => {
 	return `Request failed with status ${response.status}`;
 };
 
+export class ApiError extends Error {
+	constructor(message, status) {
+		super(message);
+		this.name = "ApiError";
+		this.status = status;
+	}
+}
+
 export async function apiRequest(path, options = {}) {
 	const token = getToken();
 	const headers = new Headers(options.headers || {});
+	const requiresAuth = options.auth !== false;
 
-	if (token && !headers.has("Authorization")) {
+	if (requiresAuth && token && !headers.has("Authorization")) {
 		headers.set("Authorization", `Bearer ${token}`);
 	}
 
+	const { auth, ...fetchOptions } = options;
 	const response = await fetch(`${API_BASE}${path}`, {
-		...options,
+		...fetchOptions,
 		headers,
 	});
 
-	if (response.status === 401) {
+	if (requiresAuth && response.status === 401 && token && token === getToken()) {
 		clearToken();
 		window.dispatchEvent(new Event("auth:logout"));
 	}
 
 	if (!response.ok) {
-		throw new Error(await getErrorMessage(response));
+		throw new ApiError(await getErrorMessage(response), response.status);
 	}
 	return response.json();
 }
 
 export async function loginUser({ email, password }) {
 	const params = new URLSearchParams({ email, password });
-  	return apiRequest(`/auth/login?${params}`, { method: "POST" });
+  	return apiRequest(`/auth/login?${params}`, { method: "POST", auth: false });
 }
 
 export async function registerUser({ username, email, password }) {
   	const params = new URLSearchParams({ username, email, password });
-  	return apiRequest(`/auth/register?${params}`, { method: "POST" });
+  	return apiRequest(`/auth/register?${params}`, { method: "POST", auth: false });
 }
 
 export async function verifyOtp({ email, otp }) {
   	const params = new URLSearchParams({ email, otp });
-  	return apiRequest(`/auth/verify-register-otp?${params}`, { method: "POST" });
+  	return apiRequest(`/auth/verify-register-otp?${params}`, { method: "POST", auth: false });
 }
 
 export async function forgotPassword({ email }) {
   	const params = new URLSearchParams({ email });
-  	return apiRequest(`/auth/forgot-password?${params}`, { method: "POST" });
+  	return apiRequest(`/auth/forgot-password?${params}`, { method: "POST", auth: false });
 }
 
 export async function resetPassword({ email, otp, new_password }) {
   	const params = new URLSearchParams({ email, otp, new_password });
-  	return apiRequest(`/auth/reset-password?${params}`, { method: "POST" });
+  	return apiRequest(`/auth/reset-password?${params}`, { method: "POST", auth: false });
 }
 
 export async function getCurrentUser() {
