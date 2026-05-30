@@ -1,0 +1,47 @@
+groups:
+  - name: pest_detection_alerts
+    rules:
+      - alert: HighTaskFailureRate
+        expr: rate(celery_task_failed_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Celery task failure rate too high"
+          description: "Task {{ $labels.task_name }} failing at {{ $value }} per second"
+
+      - alert: SlowInference
+        expr: histogram_quantile(0.95, rate(inference_duration_seconds_bucket[5m])) > 3.0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "YOLO inference too slow"
+          description: "p95 inference time is {{ $value }}s, expected under 3s"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "Error rate is {{ $value }} per second"
+
+      - alert: NoDetectionActivity
+        expr: rate(pest_detected_total[10m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No pest detection activity"
+          description: "No detections in the last 10 minutes, service may be down"
+
+      - alert: LowConfidenceScore
+        expr: histogram_quantile(0.5, rate(detection_confidence_score_bucket[10m])) < 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model confidence score too low"
+          description: "Median confidence is {{ $value }}, model may be degraded"

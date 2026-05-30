@@ -1,5 +1,6 @@
 import os
 import time
+from prometheus_client import start_http_server
 from utils.metrics import(
     CELERY_TASK_SUCCESS,
     CELERY_TASK_FAILED,
@@ -21,6 +22,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logger = get_logger(__name__)
+
+start_http_server(9100)
 
 celery_app = Celery(
     "worker",

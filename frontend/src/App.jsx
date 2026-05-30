@@ -44,8 +44,6 @@ function routeFromPath(pathname) {
   return token ? (storedRole === "admin" ? "models" : "console") : "login";
 }
 
-// ── Auth gate ─────────────────────────────────────────────────────────────────
-// "login" | "register" | "forgotPassword" | "app"
 function useAuthRoute() {
   const [route, setRouteState] = React.useState(() => routeFromPath(window.location.pathname));
 
@@ -157,7 +155,6 @@ export function MainApp({ onLogout, route, setRoute }) {
     };
   }, [previewUrl]);
 
-  // ── Console Route: Fetch prediction dashboard data ────────────────────────
   const refreshConsoleDashboard = React.useCallback(async () => {
     if (!isUser) return;
 
@@ -181,7 +178,6 @@ export function MainApp({ onLogout, route, setRoute }) {
     }
   }, [isUser]);
 
-  // ── Models Route: Fetch model registry data ─────────────────────────────
   const refreshModelsDashboard = React.useCallback(async () => {
     if (!isAdmin) return;
 
@@ -197,7 +193,6 @@ export function MainApp({ onLogout, route, setRoute }) {
     }
   }, [isAdmin]);
 
-  // ── Unified refresh for current page (used by polling and UI) ────────────
   const refreshCurrentPage = React.useCallback(() => {
     if (route === "console" && isUser) {
       refreshConsoleDashboard();
@@ -548,7 +543,6 @@ export function MainApp({ onLogout, route, setRoute }) {
   );
 }
 
-// ── Root ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const { route, setRoute } = useAuthRoute();
 

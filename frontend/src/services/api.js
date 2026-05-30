@@ -35,7 +35,6 @@ export async function apiRequest(path, options = {}) {
 	return response.json();
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
 export async function loginUser({ email, password }) {
 	const params = new URLSearchParams({ email, password });
   	return apiRequest(`/auth/login?${params}`, { method: "POST" });
@@ -65,7 +64,6 @@ export async function getCurrentUser() {
   	return apiRequest("/auth/me");
 }
 
-// ── Token helpers ─────────────────────────────────────────────────────────────
 export const saveToken = (token) => localStorage.setItem("access_token", token);
 export const getToken = () => localStorage.getItem("access_token");
 export const clearToken = () => localStorage.removeItem("access_token");

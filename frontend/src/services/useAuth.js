@@ -46,7 +46,6 @@ export function useRegister(onOtpRequired) {
         setError("");
         try {
             await registerUser({ username, email, password });
-            // Backend sends OTP — move to verification step
             onOtpRequired?.(email);
         } catch (err) {
             setError(err.message);
